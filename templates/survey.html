@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}{{ survey.name }} Survey{% endblock %}
+
+{% block content %}
+  <div class="container mx-auto my-8">
+    <h1 class="text-3xl font-bold mb-4">{{ survey.name }} Survey</h1>
+    <label class="block text-sm font-medium text-gray-700">Please answer these questions truthfully. Your data is anonymized and your privacy is maintained.</label>
+
+    <br><br><br>
+    <!-- Form for both class selection and survey responses -->
+    <form id="surveyForm" action="/submit_response/{{ survey.id }}" class="mb-8">
+      <!-- Class selection radio buttons -->
+      <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700">Select Your Class</label>
+          {% for class_option in survey.classes.split(',') %}
+              <input type="radio" name="classid" value="{{ loop.index }}" class="mr-2">{{ class_option }}
+          {% endfor %}
+      </div>
+
+      <label class="block text-sm font-medium text-gray-700">Questions</label>
+
+      <hr>
+      <!-- Survey questions with checkboxes -->
+      {% for question in survey.questions %}
+      <br>
+          <div class="mb-4">
+              <label class="block text-sm font-medium text-gray-700">{{ question.text }}</label>
+              <div>
+                  <input type="radio" name="{{ question.id }}" value="0" class="mr-2"> Yes<br>
+                  <input type="radio" name="{{ question.id }}" id="{{ question.text }}" value="1" class="mr-2"> No
+
+                <hr>
+              </div>
+          </div>
+      {% endfor %}
+  
+      <!-- Submit button -->
+      <button type="button"
+              class="bg-cyan-600 text-white font-semibold px-4 py-2 rounded-md hover:bg-cyan-700 focus:outline-none focus:ring focus:border-cyan-500"
+              onclick="submitForm()">
+          Submit
+      </button>
+    </form>
+    <script>
+      function submitForm() {
+          const form = document.getElementById('surveyForm');
+          const formData = new FormData(form);
+
+          // Use fetch to send a POST request asynchronously
+          fetch(form.action, {
+              method: 'POST',
+              body: formData
+          })
+          .then(response => response.json())
+          .then(data => {
+              // Handle the response data as needed (e.g., display a message to the user)
+              console.log(data);
+          })
+          .catch(error => {
+              console.error('Error:', error);
+          });
+
+          predictOutcome()
+      }
+  </script>
+    <div id="predictionResult"></div>
+
+    <!-- Download CSV button -->
+    <form action="{{ url_for('download_survey', survey_id=survey.id) }}" method="get">
+      <button type="submit"
+              class="bg-gray-800 text-white font-semibold px-4 py-2 rounded-md hover:bg-gray-900 focus:outline-none focus:ring focus:border-gray-700">
+        Download Responses as CSV
+      </button>
+    </form>
+
+    <script src="{{ url_for('static', filename='Simple-JS-Neural-Network/lib/matrix.js') }}"></script>
+    <script src="{{ url_for('static', filename='Simple-JS-Neural-Network/lib/snn.js') }}"></script>
+    <!-- JavaScript code for training the neural network and predicting outcome -->
+<script>
+  // Declare the neural network and load data
+  let brain;
+  let questions;
+  let responses;
+  let classes;
+  const currentUrl = window.location.href;
+  fetch('http://localhost:5000/get_data/' + currentUrl.substr(currentUrl.lastIndexOf('/') + 1))
+  .then(response => response.json())
+  .then(data => {
+      // Use the JSON data in your script
+      console.log(data);
+
+      // Perform your operations here
+      // Example: Access classes, questions, and responses
+      classes = data.classes;
+      questions = data.questions;
+      responses = data.responses;
+      console.log(classes, questions, responses)
+
+      // Calculate the number of classes and questions
+      const noClasses = classes.length;
+      const noQuestions = questions.length;
+
+      // Design your neural network
+      const design = [noQuestions, 2 * noQuestions, 2 * noClasses, noClasses];
+
+      // Create a new neural network
+      brain = new NeuralNetwork(design);
+
+      // Train the neural network
+      for (let i = 0; i < 1000; i++) {
+          for (let j = 0; j < responses.length; j++) {
+              const response = responses[j];
+              if (response.features.length > 0 && response.classes.length > 0) {
+                  brain.train(response.features, response.classes);
+              }
+          }
+      }
+  })
+  .catch(error => {
+      console.error('Error:', error);
+  });
+
+  // Function to predict outcome based on user input
+  function predictOutcome() {
+    console.log("reached here");
+    // Gather user input from radio buttons
+    const classid = document.querySelector('input[name="classid"]:checked').value;
+    const features = [];
+    questions.forEach(question => {
+        const q = document.querySelector(`input[id="${question.id}"]:checked`);
+        console.log(q);
+        features.push(q ? q.value : -1); // Add the checked value or -1 if none is checked
+    });
+
+    // Make a prediction using the trained neural network
+    const prediction = brain.predict(features);
+
+    // Display the prediction on the screen
+    const predictionResultElement = document.getElementById('predictionResult');
+    let i = 0;
+    console.log(prediction, classes);
+
+    classes.forEach(c => {
+        const predictionResultElement = document.getElementById('predictionResult'); // Replace 'predictionResult' with the actual ID of your element
+        const result = document.createElement('div');
+        result.textContent = `${c} - ${prediction[i]}`;
+        predictionResultElement.appendChild(result);
+        i++;
+    });
+    
+  }
+</script>
+
+  </div>
+{% endblock %}

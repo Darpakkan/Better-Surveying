@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}
+<h1 class="text-2xl">Surveys</h1>
+<script src="{{ url_for('static', filename='search.js') }}"></script>
+{% endblock %}
+
+{% block content %}
+
+        <div class="flex flex-col items-center gap-3 m-5">
+            <div class="flex">
+                <form id="searchForm">
+                    <input type="text" id="searchInput" placeholder="Search for the survey you like"
+                        class="w-full md:w-80 px-3 h-10 rounded-l border-2 border-sky-500 focus:outline-none focus:border-sky-500"
+                    >
+                    <button type="submit" class="bg-sky-500 text-white rounded-r px-2 md:px-3 py-0 md:py-1">Search</button>
+                </form>
+            </div>
+        </div>
+
+    
+    {% if surveys %}
+    <div id="surveyContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-10 md:px-20">
+        {% for survey in surveys %}
+        <div class="bg-white rounded-xl shadow-md overflow-hidden">
+            <div class="relative">
+                <img class="w-full h-48 object-cover" src="https://via.placeholder.com/600x360">
+                <div class="absolute top-0 right-0 bg-indigo-500 text-white font-bold px-2 py-1 m-2 rounded-md">New
+                </div>
+                <div class="absolute bottom-0 right-0 bg-gray-800 text-white px-2 py-1 m-2 rounded-md text-xs">3 min read
+                </div>
+            </div>
+            <div class="p-4">
+                <div class="text-lg font-medium text-gray-800 mb-2"><a href="{{ url_for('take_survey', survey_id=survey.id) }}">{{ survey.name }}</a></div>
+                <p class="text-gray-500 text-sm">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed auctor, mi sed
+                    egestas tincidunt, libero dolor bibendum nisl, non aliquam quam massa id lacus.</p>
+            </div>
+
+            <button class="p-2 border rounded-full hover:bg-gray-100" onclick="likeSurvey({{ survey.id }})">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                </svg>
+            </button>
+            <span class="text-2xl font-bold">{{ survey.likes - survey.dislikes }}</span>
+            <button class="p-2 border rounded-full hover:bg-gray-100" onclick="dislikeSurvey({{ survey.id }})">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+            </button>
+
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+        <p>No surveys available.</p>
+    {% endif %}
+
+    <hr>
+
+    <div class="bg-white border border-4 rounded-lg shadow relative m-10">
+
+        <div class="flex items-start justify-between p-5 border-b rounded-t">
+            <h3 class="text-xl font-semibold">
+                Create Survey
+            </h3>
+            <button type="button" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center" data-modal-toggle="product-modal">
+               <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+            </button>
+        </div>
+    
+        <div class="p-6 space-y-6">
+            <form action="/create_survey" method="post">
+                <div class="grid grid-cols-6 gap-6">
+                    <div class="col-span-6 sm:col-span-3">
+                        <label for="name" class="text-sm font-medium text-gray-900 block mb-2">Survey Name</label>
+                        <input type="text" name="name" id="name" class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-cyan-600 focus:border-cyan-600 block w-full p-2.5" placeholder="Personality Test" required="">
+                    </div>
+                    <div class="col-span-6 sm:col-span-3">
+                        <label for="questions" class="text-sm font-medium text-gray-900 block mb-2">Survey Questions (New Line-separated)</label>
+                        <textarea id="questions" name="questions" rows="6" class="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-cyan-600 focus:border-cyan-600 block w-full p-4" placeholder="Introverted" required=""></textarea>
+                    </div>
+                    <div class="col-span-6 sm:col-span-3">
+                        <label for="classes" class="text-sm font-medium text-gray-900 block mb-2">Classification Targets (New Line-separated)</label>
+                        <textarea id="classes" name="classes" rows="6" class="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-cyan-600 focus:border-cyan-600 block w-full p-4" placeholder="Introverted" required=""></textarea>
+                    </div>
+                    <div class="col-span-3">
+                        <label for="classDescription" class="text-sm font-medium text-gray-900 block mb-2">Class Description (New Line-separated)</label>
+                        <textarea id="classDescription" name="classDescription" rows="6" class="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-cyan-600 focus:border-cyan-600 block w-full p-4" placeholder="Details of Class 1"></textarea>
+                    </div>
+                    <div class="col-span-3">
+                        <label for="description" class="text-sm font-medium text-gray-900 block mb-2">Survey Description</label>
+                        <textarea id="description" name="description" rows="6" class="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-cyan-600 focus:border-cyan-600 block w-full p-4" placeholder="Details"></textarea>
+                    </div>
+                </div>
+
+                <div class="p-6 border-t border-gray-200 rounded-b">
+                    <button class="text-white bg-cyan-600 hover:bg-cyan-700 focus:ring-4 focus:ring-cyan-200 font-medium rounded-lg text-sm px-5 py-2.5 text-center" type="submit">Save all</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function likeSurvey(surveyId) {
+            fetch(`/like/${surveyId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    window.location.reload();
+                    return response.json();
+                })
+                .then(data => {
+                    // Handle the response if needed
+                    console.log(data);
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                });
+        }
+    
+        function dislikeSurvey(surveyId) {
+            fetch(`/dislike/${surveyId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    window.location.reload();
+                    return response.json();
+                })
+                .then(data => {
+                    // Handle the response if needed
+                    console.log(data);
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                });
+        }
+    </script>
+    
+{% endblock %}

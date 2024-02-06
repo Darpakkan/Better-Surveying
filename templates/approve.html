@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}Surveys{% endblock %}
+
+{% block content %}
+    <div class="flex flex-col items-center">
+        <h1 class="text-2xl font-semibold mb-6 m-5">Approval List</h1>
+        <hr>
+        {% if surveys %}
+            <ul class="divide-y divide-gray-200 px-4">
+                {% for survey in surveys %}
+                    <li class="py-4">
+                        <div class="flex items-center">
+                            <label for="todo{{ survey.id }}" class="ml-3 block text-gray-900">
+                                <span class="text-lg font-medium"><a href="{{ url_for('take_survey', survey_id=survey.id) }}">{{ survey.name }}</a></span>
+                            </label>
+                            <button class="ml-3 border-2 p-1 m-3 rounded-lg"><a href="{{ url_for('approve_survey', survey_id=survey.id) }}">Approve</a></button>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No surveys!</p>
+        {% endif %}
+    </div>
+{% endblock %}
